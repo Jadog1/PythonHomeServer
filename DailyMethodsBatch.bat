@@ -1,0 +1,1 @@
+python RunDailyMethods.py > output.txt
