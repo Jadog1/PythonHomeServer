@@ -1,9 +1,11 @@
 import datetime
 import pyodbc 
+import os
+from dotenv import load_dotenv
 
 class DatabaseExecutions():
-    server = 'LAPTOP-F6HJM7KT' 
-    database = 'HomeServer' 
+    server = os.getenv('db_server', "")
+    database = os.getenv('db_name', "")
     conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes;')
     cursor = conn.cursor()
     
