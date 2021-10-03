@@ -15,24 +15,22 @@ class Reports:
         return report+"<br>"
 
     def __costsByCategory(self, days=7):
-        report=""
         lastWeekSum=self.db.genericQuery("Select budgetCategory, cost from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory, cost order by cost desc ")
-        report+=self.__genStringReport("All costs by category", lastWeekSum)
-        return report
+        return self.__genStringReport("All costs by category", lastWeekSum)
 
     #Send a sum by user, given the amount of days
     def __sumByUser(self, days=7):
-        report=""
         lastWeekSum=self.db.genericQuery("Select username, budgetCategory, SUM(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by username, budgetCategory order by username")
-        report+=self.__genStringReport("Sum by user", lastWeekSum)
-        return report
+        return self.__genStringReport("Sum by user", lastWeekSum)
 
-    #Send an average by category, given the amount of days
-    def __avgByCategory(self, days=7):
-        report=""
+    #Send an average by category, given the amount of days. This is safe method as it can handle averages of dates prior to historical data
+    def __avgByCategory_SAFE(self, days=7):
         lastWeekSum=self.db.genericQuery("select budgetCategory, cast(avg(cost) as decimal(10,2)) from (select budgetCategory, sum(cost) as cost, DATEDIFF(week, GETDATE(), date) as WeekNumber, date from Finance group by budgetCategory, date) as b where date>DATEADD(day, -"+str(days)+", GETDATE())  group by budgetCategory")
-        report+=self.__genStringReport("Average by category", lastWeekSum)
-        return report
+        return self.__genStringReport("Average by category", lastWeekSum)
+
+    def __avgByCategory(self, days=31):
+        lastWeekSum=self.db.genericQuery("select budgetCategory, cast(sum(cost)/("+str(days)+"/7) as decimal(10,2)) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory")
+        return self.__genStringReport("Average by category for month", lastWeekSum)
 
     #Abstracted report of data to send
     def WeeklyReport(self):

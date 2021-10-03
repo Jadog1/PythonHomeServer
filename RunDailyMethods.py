@@ -17,7 +17,7 @@ errorDetected=""
 try:
     dbInserts.genericQuery("SELECT @@version;")
 except:
-    errorerrorDetected+="Microsoft SQL Server currently down, please fix!\n"
+    errorDetected+="Microsoft SQL Server currently down, please fix!\n"
 if(request.serverIsRunning()==False):
     errorDetected+="Detected server not running!"
 
@@ -49,10 +49,13 @@ if(errorDetected==""):
     else:
         print("No notes to send at this time")
 
-    if (reports.SendReports()):
-        print("Report sent!")
-    else:
-        print("No report sent")
+    try:
+        if (reports.SendReports()):
+            print("Report sent!")
+        else:
+            print("No report sent")
+    except Exception as e:
+        print("Unable to successfully send reports, " + str(e))
 
 else:
     print(errorDetected)
