@@ -4,15 +4,22 @@ import datetime
 
 class Reports:
     db = DatabaseExecute.DatabaseExecutions()
+    dayOfWeek=datetime.date.today().weekday()
     #Generate the report to a consistent format
     def __genStringReport(self, reportName, queryData):
         report="<b>"+reportName+"</b>\n----------------\n"
         for val in queryData:
             if(len(val)==2):
                 report+=str(val[0]) + ": $" + str(val[1])+"\n"
+            elif(len(val)==1):
+                report+="$"+str(val[0])
             else:
                 report+=str(val[0]) + ", " + str(val[1])+ ": $" + str(val[2])+"\n"
         return report+"<br>"
+
+    def __totalSumOfCosts(self, days=7):
+        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) and username!='BatchClient'")
+        return self.__genStringReport("Total cost", lastWeekSum)
 
     def __costsByCategory(self, days=7):
         lastWeekSum=self.db.genericQuery("Select budgetCategory, cost from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory, cost order by cost desc ")
@@ -30,26 +37,43 @@ class Reports:
 
     def __avgByCategory(self, days=31):
         lastWeekSum=self.db.genericQuery("select budgetCategory, cast(sum(cost)/("+str(days)+"/7) as decimal(10,2)) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory")
-        return self.__genStringReport("Average by category for month", lastWeekSum)
+        return self.__genStringReport("Average by category for month (Weekly view)", lastWeekSum)
+
+    def __donationTotals(self, daysSinceLastChurchDonation):
+        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and budgetCategory='Donation'")
+        return self.__genStringReport("Sum of donations for month", lastWeekSum)
 
     #Abstracted report of data to send
     def WeeklyReport(self):
         report=""
-        report+=self.__costsByCategory(7)
-        report+=self.__sumByUser(7)
+        report+=self.__totalSumOfCosts(self.dayOfWeek)
+        report+=self.__costsByCategory(self.dayOfWeek)
+        return report
+
+    def MonthlyReport(self):
+        report=""
+        report+=self.__totalSumOfCosts(31)
+        report+=self.__sumByUser(31)
         report+=self.__avgByCategory(31)
         return report
 
+    def DonationReport(self, daysSinceLastChurchDonation):
+        return self.__donationTotals(daysSinceLastChurchDonation)
+
     def SendReports(self):
-        if datetime.date.today().weekday() == 4:
-            #Add the constants and tag them as by batch client if method hasn't been run in last 6 days
-            if(len(self.db.genericQuery("select * from Finance where date>DATEADD(day, -6, GETDATE()) and budgetCategory='Church'"))==0):
-                queryData=self.db.genericQuery("select name, monthlyCost from FinanceConstants")
-                for data in queryData:
-                    self.db.genericQuery("insert into Finance (username, budgetCategory, cost, date, notes) values (?, ?, ?, ?, ?)", False, ['BatchClient', data[0], float(data[1])/4, datetime.date.today(), 'These are sent from batch client'])
-            server = ServerRequest.Notifications()
+        reportSent=True
+        server = ServerRequest.Notifications()
+        daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.date, CONVERT(DATE, GETDATE())) from (select TOP 1 date from Finance where budgetCategory='Church' and username!='BatchClient' order by date desc) lastDay;")[0][0])
+        if(daysSinceLastChurchDonation>30):
+            server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> since last donation")
+        
+        if self.dayOfWeek == 4:
             server.sendEmail("Weekly report",self.WeeklyReport())
-            return True
+        elif self.dayOfWeek == 5:
+            server.sendEmail("Monthly report",self.MonthlyReport())
+        elif self.dayOfWeek == 6:
+            server.sendEmail("Donation report",self.DonationReport(daysSinceLastChurchDonation))
         else:
-            return False
+            reportSent=False
+        return reportSent
         
