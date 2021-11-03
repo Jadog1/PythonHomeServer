@@ -43,6 +43,10 @@ class Reports:
         lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and budgetCategory='Donation'")
         return self.__genStringReport("Sum of donations for month", lastWeekSum)
 
+    def __donationReminder(self, daysSinceLastChurchDonation):
+        lastWeekSum=self.db.genericQuery("select 850-sum(cost) from Finance where date>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and budgetCategory='Donation'")
+        return self.__genStringReport("Remainder owed", lastWeekSum)
+
     #Abstracted report of data to send
     def WeeklyReport(self):
         report=""
@@ -65,7 +69,7 @@ class Reports:
         server = ServerRequest.Notifications()
         daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.date, CONVERT(DATE, GETDATE())) from (select TOP 1 date from Finance where budgetCategory='Church' and username!='BatchClient' order by date desc) lastDay;")[0][0])
         if(daysSinceLastChurchDonation>30):
-            server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> since last donation")
+            server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> days since last donation\n"+self.__donationReminder(daysSinceLastChurchDonation))
         
         if self.dayOfWeek == 4:
             server.sendEmail("Weekly report",self.WeeklyReport())
