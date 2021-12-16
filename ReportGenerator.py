@@ -18,7 +18,7 @@ class Reports:
         return report+"<br>"
 
     def __totalSumOfCosts(self, days=7):
-        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) and username!='BatchClient'")
+        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE())")
         return self.__genStringReport("Total cost", lastWeekSum)
 
     def __costsByCategory(self, days=7):
