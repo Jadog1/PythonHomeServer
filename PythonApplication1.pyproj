@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c0a70b43-a32b-42b0-8e4d-dbaf085aa6f4</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>RunDailyMethods.py</StartupFile>
+    <StartupFile>ServerRequest.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

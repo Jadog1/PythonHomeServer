@@ -7,7 +7,7 @@ port = 465  # For SSL
 smtp_server = "smtp.gmail.com"
 sender_email = os.getenv('senderemail', "")  # Enter your address
 receiver_email = os.getenv('receiveremail', "")  # Enter receiver address
-password = os.getenv('senderpw', "")
+password = os.getenv('emailpw', "")
 
 def sendEmail(subject, body, errorHandle=False):
     message = "Subject: {} \n\n {}"
@@ -20,3 +20,4 @@ def sendEmail(subject, body, errorHandle=False):
             server.sendmail(sender_email, sender_email, message)
         else:
             server.sendmail(sender_email, receiver_email, message)
+
