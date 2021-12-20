@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>c0a70b43-a32b-42b0-8e4d-dbaf085aa6f4</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>ServerRequest.py</StartupFile>
+    <StartupFile>RunDailyMethods.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -25,6 +25,16 @@
     <Compile Include="EmailHandler.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Graphs\CompareMonths.py" />
+    <Compile Include="Graphs\DatabaseExecute.py" />
+    <Compile Include="Graphs\PDF_CompareMonths.py" />
+    <Compile Include="Graphs\PDF_DailySpending.py" />
+    <Compile Include="Graphs\QueryComponents.py" />
+    <Compile Include="Graphs\QueryToString.py" />
+    <Compile Include="Graphs\YearlyReview.py" />
+    <Compile Include="PDF_Generator.py" />
+    <Compile Include="QueryComponents.py" />
+    <Compile Include="QueryToString.py" />
     <Compile Include="ReportGenerator.py">
       <SubType>Code</SubType>
     </Compile>
@@ -42,6 +52,16 @@
     <Content Include=".env">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Graphs\.env" />
+    <Content Include="Graphs\.vscode\launch.json" />
+    <Content Include="Graphs\__pycache__\DatabaseExecute.cpython-39.pyc" />
+    <Content Include="Graphs\__pycache__\QueryComponents.cpython-39.pyc" />
+    <Content Include="Graphs\__pycache__\QueryToString.cpython-39.pyc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Graphs\" />
+    <Folder Include="Graphs\.vscode\" />
+    <Folder Include="Graphs\__pycache__\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

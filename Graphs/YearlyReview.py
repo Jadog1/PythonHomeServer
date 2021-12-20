@@ -1,29 +1,26 @@
 # importing the required module
 import matplotlib.pyplot as plt
 import DatabaseExecute as db #My custom module with a class for querying on company database
-import datetime
 from QueryToString import *
 
 #Initiate defaults
 microsoftSQL=db.DatabaseExecutions()
 #Setup query and main logic
-currentYear=todaysDate.year
-beginningOfYear=datetime.date(currentYear, 1, 1)
 query='''
-select DATEPART(WEEK, date) as week, sum(cost) as total 
+select sum(cost) as total, DATEPART(WEEK, date) as week
 from Finance where date >= \''''+str(beginningOfYear)+'''\'
 group by DATEPART(WEEK, date)
 order by DATEPART(WEEK, date)
 '''
 firstDayOfMonth=todaysDate.replace(day=1)
 query2='''
-select Day(date) as created_day, sum(cost)
+select sum(cost), Day(date) as created_day
 from Finance where date >=\''''+str(firstDayOfMonth)+'''\'
 group by Day(date)
 order by Day(date) desc
 '''
 query3='''
-select DATEPART(WEEK, date), sum(cost)
+select sum(cost), DATEPART(WEEK, date)
 from Finance where date >= \''''+str(beginningOfYear)+'''\' and budgetCategory='Bills'
 group by DATEPART(WEEK, date)
 order by DATEPART(WEEK, date)
@@ -46,14 +43,14 @@ results_AllMonthsView = microsoftSQL.manualQuery(queryYearMonthlyView)
 microsoftSQL.closeConnection()
 
 #set up all x,y coords
-x=[WeekNumberTo_MMDD(item[0]) for item in results]
-y=[item[1] for item in results]
-xBills=[WeekNumberTo_MMDD(item[0]) for item in results_onlyBills]
-yBills=[item[1] for item in results_onlyBills]
-xMonth=[item[0] for item in results_monthView]
-yMonth=[item[1] for item in results_monthView]
-xYearMonth=[MonthNumberTo_MM(item[0]) for item in results_AllMonthsView]
-yYearMonth=[item[1] for item in results_AllMonthsView]
+y=[WeekNumberTo_MMDD(item[0]) for item in results]
+x=[item[1] for item in results]
+yBills=[WeekNumberTo_MMDD(item[0]) for item in results_onlyBills]
+xBills=[item[1] for item in results_onlyBills]
+yMonth=[item[0] for item in results_monthView]
+xMonth=[item[1] for item in results_monthView]
+yYearMonth=[MonthNumberTo_MM(item[0]) for item in results_AllMonthsView]
+xYearMonth=[item[1] for item in results_AllMonthsView]
 
 #Setup custom variables to display custom data
 maxHeight=max(yYearMonth)

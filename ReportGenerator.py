@@ -1,6 +1,7 @@
 import ServerRequest
 import DatabaseExecute
 import datetime
+from PDF_Generator import *
 
 class Reports:
     db = DatabaseExecute.DatabaseExecutions()
@@ -71,7 +72,17 @@ class Reports:
         if(daysSinceLastChurchDonation>30):
             server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> days since last donation\n"+self.__donationReminder(daysSinceLastChurchDonation))
         
-        if self.dayOfWeek == 4:
+        if self.dayOfWeek == 1:
+            DailySpending()
+            server.PDF_to_JPG("image.pdf")
+            server.sendEmailAttachment("Daily spending report", "Daily report")
+            server.clearTempStorage()
+        elif self.dayOfWeek == 2:
+            CompareMonths()
+            server.PDF_to_JPG("image.pdf")
+            server.sendEmailAttachment("Monthly compare", "Monthly report")
+            server.clearTempStorage()
+        elif self.dayOfWeek == 4:
             server.sendEmail("Weekly report",self.WeeklyReport())
         elif self.dayOfWeek == 5:
             server.sendEmail("Monthly report",self.MonthlyReport())
