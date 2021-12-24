@@ -19,33 +19,33 @@ class Reports:
         return report+"<br>"
 
     def __totalSumOfCosts(self, days=7):
-        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE())")
+        lastWeekSum=self.db.genericQuery("select sum(Total) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE())")
         return self.__genStringReport("Total cost", lastWeekSum)
 
     def __costsByCategory(self, days=7):
-        lastWeekSum=self.db.genericQuery("Select budgetCategory, cost from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory, cost order by cost desc ")
+        lastWeekSum=self.db.genericQuery("Select BudgetCategory, Total from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE()) group by BudgetCategory, Total order by Total desc ")
         return self.__genStringReport("All costs by category", lastWeekSum)
 
     #Send a sum by user, given the amount of days
     def __sumByUser(self, days=7):
-        lastWeekSum=self.db.genericQuery("Select username, budgetCategory, SUM(cost) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by username, budgetCategory order by username")
+        lastWeekSum=self.db.genericQuery("Select BuyerCategory, BudgetCategory, SUM(cost) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE()) group by BuyerCategory, BudgetCategory order by BuyerCategory")
         return self.__genStringReport("Sum by user", lastWeekSum)
 
     #Send an average by category, given the amount of days. This is safe method as it can handle averages of dates prior to historical data
     def __avgByCategory_SAFE(self, days=7):
-        lastWeekSum=self.db.genericQuery("select budgetCategory, cast(avg(cost) as decimal(10,2)) from (select budgetCategory, sum(cost) as cost, DATEDIFF(week, GETDATE(), date) as WeekNumber, date from Finance group by budgetCategory, date) as b where date>DATEADD(day, -"+str(days)+", GETDATE())  group by budgetCategory")
+        lastWeekSum=self.db.genericQuery("select BudgetCategory, cast(avg(cost) as decimal(10,2)) from (select BudgetCategory, sum(Total) as cost, DATEDIFF(week, GETDATE(), CreatedAt) as WeekNumber, CreatedAt from FinanceExpense group by BudgetCategory, CreatedAt) as b where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE())  group by BudgetCategory")
         return self.__genStringReport("Average by category", lastWeekSum)
 
     def __avgByCategory(self, days=31):
-        lastWeekSum=self.db.genericQuery("select budgetCategory, cast(sum(cost)/("+str(days)+"/7) as decimal(10,2)) from Finance where date>DATEADD(day, -"+str(days)+", GETDATE()) group by budgetCategory")
+        lastWeekSum=self.db.genericQuery("select BudgetCategory, cast(sum(Total)/("+str(days)+"/7) as decimal(10,2)) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE()) group by BudgetCategory")
         return self.__genStringReport("Average by category for month (Weekly view)", lastWeekSum)
 
     def __donationTotals(self, daysSinceLastChurchDonation):
-        lastWeekSum=self.db.genericQuery("select sum(cost) from Finance where date>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and budgetCategory='Donation'")
+        lastWeekSum=self.db.genericQuery("select sum(Total) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and BudgetCategory='Donation'")
         return self.__genStringReport("Sum of donations for month", lastWeekSum)
 
     def __donationReminder(self, daysSinceLastChurchDonation):
-        lastWeekSum=self.db.genericQuery("select 850-sum(cost) from Finance where date>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and budgetCategory='Donation'")
+        lastWeekSum=self.db.genericQuery("select 850-sum(Total) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and BudgetCategory='Donation'")
         return self.__genStringReport("Remainder owed", lastWeekSum)
 
     #Abstracted report of data to send
@@ -68,7 +68,7 @@ class Reports:
     def SendReports(self):
         reportSent=True
         server = ServerRequest.Notifications()
-        daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.date, CONVERT(DATE, GETDATE())) from (select TOP 1 date from Finance where budgetCategory='Church' and username!='BatchClient' order by date desc) lastDay;")[0][0])
+        daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.CreatedAt, CONVERT(DATE, GETDATE())) from (select TOP 1 CreatedAt from FinanceExpense where BudgetCategory='Church' and BuyerCategory!='BatchClient' order by CreatedAt desc) lastDay;")[0][0])
         if(daysSinceLastChurchDonation>30):
             server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> days since last donation\n"+self.__donationReminder(daysSinceLastChurchDonation))
         

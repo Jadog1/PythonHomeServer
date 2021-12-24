@@ -29,11 +29,11 @@ class QueryStringComponent():
 
     def FirstToNowBudgets(self, currentDate=True):
         query='''
-        select sum(cost) as total, budgetCategory 
-        from Finance
-        where date between \'XXFirstDate\' and \'XXSecondDate\' 
-        group by budgetCategory 
-        order by sum(cost) desc;
+        select sum(Total) as total, BudgetCategory 
+        from FinanceExpense
+        where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\' 
+        group by BudgetCategory 
+        order by sum(Total) desc;
         '''
         if(currentDate):
             query=query.replace("XXFirstDate", self.date_firstOfCurrentMonth)
@@ -46,11 +46,11 @@ class QueryStringComponent():
 
     def FirstToNowSubBudgets(self, currentDate=True):
         query='''
-        select sum(cost) as total, case when subBudgetCategory!='' then subBudgetCategory else budgetCategory end 
-        from Finance
-        where date between \'XXFirstDate\' and \'XXSecondDate\'
-        group by subBudgetCategory, budgetCategory
-        order by sum(cost) desc;
+        select sum(Total) as total, case when SubBudgetCategory!='' then SubBudgetCategory else BudgetCategory end 
+        from FinanceExpense
+        where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\'
+        group by SubBudgetCategory, BudgetCategory
+        order by sum(Total) desc;
         '''
         if(currentDate):
             query=query.replace("XXFirstDate", self.date_firstOfCurrentMonth)
@@ -62,10 +62,10 @@ class QueryStringComponent():
 
     def CostsOverYear(self, partAtWeek=True):
         query='''
-        select sum(cost) as total, DATEPART(WEEK, date) as week
-        from Finance where date >= \''''+str(beginningOfYear)+'''\'
-        group by DATEPART(WEEK, date)
-        order by DATEPART(WEEK, date)
+        select sum(Total) as total, DATEPART(WEEK, CreatedAt) as week
+        from FinanceExpense where CreatedAt >= \''''+str(beginningOfYear)+'''\'
+        group by DATEPART(WEEK, CreatedAt)
+        order by DATEPART(WEEK, CreatedAt)
         '''
         if(partAtWeek==False):
             query.replace("DATEPART(WEEK, date)", "DATEPART(MONTH, date)")
@@ -73,19 +73,19 @@ class QueryStringComponent():
 
     def AverageMonthlyCost(self):
         query='''
-        select AVG(cost)
+        select AVG(Total)
         from (
-        select sum(cost) as cost from Finance group by DATEPART(MONTH, date)
+        select sum(Total) as Total from FinanceExpense group by DATEPART(MONTH, CreatedAt)
         ) sumMonthlyCost
         '''
         return (query, basicArray_NLists(1))
         
-    def QueryByCategory(self, categories, budgetType='budgetCategory', partAtWeek=True):
+    def QueryByCategory(self, categories, budgetType='BudgetCategory', partAtWeek=True):
         query='''
-        select sum(cost), DATEPART(WEEK, date)
-        from Finance where date >= \''''+str(beginningOfYear)+'''\' and XXTYPE XXBUDGET
-        group by DATEPART(WEEK, date)
-        order by DATEPART(WEEK, date)
+        select sum(Total), DATEPART(WEEK, CreatedAt)
+        from FinanceExpense where CreatedAt >= \''''+str(beginningOfYear)+'''\' and XXTYPE XXBUDGET
+        group by DATEPART(WEEK, CreatedAt)
+        order by DATEPART(WEEK, CreatedAt)
         '''
         query.replace("XXTYPE", budgetType)
         if(type(categories)==list):
@@ -95,15 +95,15 @@ class QueryStringComponent():
             query=query.replace("XXBUDGET", 'IN ('+categories.join(",")+')')
 
         if(partAtWeek==False):
-            query=query.replace("DATEPART(WEEK, date)", "DATEPART(MONTH, date)")
+            query=query.replace("DATEPART(WEEK, CreatedAt)", "DATEPART(MONTH, CreatedAt)")
         return (query, basicArray_NLists(2, ('WeekNo' if partAtWeek else 'Monthno')))
 
     def DailySpendingOverMonth(self):
         query='''
-        select sum(cost), Day(date) as created_day
-        from Finance where date >=\''''+str(self.date_firstOfCurrentMonth)+'''\'
-        group by Day(date)
-        order by Day(date) desc
+        select sum(Total), Day(CreatedAt) as created_day
+        from FinanceExpense where CreatedAt >=\''''+str(self.date_firstOfCurrentMonth)+'''\'
+        group by Day(CreatedAt)
+        order by Day(CreatedAt) desc
         '''
 
         return (query, basicArray_NLists(2))

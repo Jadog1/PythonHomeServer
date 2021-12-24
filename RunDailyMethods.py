@@ -35,14 +35,14 @@ if(errorDetected==""):
         print("No transactions were created")
 
     #Run logic for sending reminders
-    notes = dbInserts.genericQuery("select note from Note where date<=Cast(GETDATE() as DATE)")
+    notes = dbInserts.genericQuery("select note from Note where CreatedAt<=Cast(GETDATE() as DATE)")
     if(len(notes) > 0):
         compiledNotes=""
         for note in notes:
             compiledNotes += (str(note[0])+"\n")
         try:
             notifications.sendEmail("Jadon ("+str(len(notes))+")", compiledNotes)
-            dbInserts.genericQuery("delete from Note where date<=Cast(GETDATE() as DATE)", False)
+            dbInserts.genericQuery("delete from Note where CreatedAt<=Cast(GETDATE() as DATE)", False)
             print("Completed sending emails and removing reminders")
         except Exception as e:
             print("Unable to successfully email and/or delete notes, " + str(e))
