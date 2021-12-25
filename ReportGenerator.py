@@ -40,6 +40,35 @@ class Reports:
         lastWeekSum=self.db.genericQuery("select BudgetCategory, cast(sum(Total)/("+str(days)+"/7) as decimal(10,2)) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE()) group by BudgetCategory")
         return self.__genStringReport("Average by category for month (Weekly view)", lastWeekSum)
 
+    #Get all recorded dates which probably need to send a notification
+    def __FinanceUpdates(self):
+        ExpensesPastDueReport = "<b>Finance updates!</b>\n----------------\n"
+        ExpensesPastUpdate = self.db.genericQuery('''
+        select DATEDIFF(day, CreatedAt, CONVERT(DATE, GETDATE())) as daysSincePaid, matched.BudgetCategory, matched.SubBudgetCategory, ReliantOnBudgetCategory, ReliantOnSubBudgetCategory
+        from FinanceUpdate fu
+        Cross apply
+                (select Top 1 CreatedAt, FrequencyOfDays, BudgetCategory, SubBudgetCategory
+                from FinanceExpense fe
+	            where fu.BudgetCategory=fe.BudgetCategory and fu.SubBudgetCategory=fe.SubBudgetCategory
+	            order by CreatedAt desc
+	            ) matched
+        where DATEDIFF(day, CreatedAt, CONVERT(DATE, GETDATE()))>matched.FrequencyOfDays;
+	  ''')
+        for expense in ExpensesPastUpdate:
+            if(expense[3]!=''):
+                query='''
+                select Sum(Total) from FinanceExpense fe 
+                join FinanceUpdate fu on fe.BudgetCategory = fe.BudgetCategory and fu.SubBudgetCategory=fe.SubBudgetCategory
+                where fe.BudgetCategory='XXBUDG' and fe.SubBudgetCategory='XXSUBBUDG' and 
+                      fu.BudgetCategory='XXBUDG' and fu.SubBudgetCategory='XXSUBBUDG' and fe.CreatedAt>DateAdd(day, -1*fu.FrequencyOfDays, GETDATE())
+                '''
+                query.replace('XXBUDG', expense[3])
+                query.replace('XXSUBBUDG', expense[4])
+                ReliantCategoryTotals=self.db.genericQuery(query)[0][0]
+                ExpensesPastDueReport=ExpensesPastDueReport+"Total remaining: $"+str(ReliantCategoryTotals)
+            ExpensesPastDueReport=ExpensesPastDueReport+""
+
+
     def __donationTotals(self, daysSinceLastChurchDonation):
         lastWeekSum=self.db.genericQuery("select sum(Total) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(daysSinceLastChurchDonation)+", GETDATE()) and BudgetCategory='Donation'")
         return self.__genStringReport("Sum of donations for month", lastWeekSum)
@@ -68,7 +97,7 @@ class Reports:
     def SendReports(self):
         reportSent=True
         server = ServerRequest.Notifications()
-        daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.CreatedAt, CONVERT(DATE, GETDATE())) from (select TOP 1 CreatedAt from FinanceExpense where BudgetCategory='Church' and BuyerCategory!='BatchClient' order by CreatedAt desc) lastDay;")[0][0])
+        daysSinceLastChurchDonation=int(self.db.genericQuery("select DATEDIFF(day, lastDay.CreatedAt, CONVERT(DATE, GETDATE())) from (select TOP 1 CreatedAt from FinanceExpense where BudgetCategory='Church' order by CreatedAt desc) lastDay;")[0][0])
         if(daysSinceLastChurchDonation>30):
             server.sendEmail("Submit donation!", "It has been <b>"+str(daysSinceLastChurchDonation)+"</b> days since last donation\n"+self.__donationReminder(daysSinceLastChurchDonation))
         
