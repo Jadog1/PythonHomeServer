@@ -27,6 +27,16 @@ class QueryStringComponent():
     date_MonthAgo=str(todaysDate.replace(month=todaysDate.month-1))
     date_firstOfCurrentMonth=str(todaysDate.replace(day=1))
 
+    def __CurrentMonthOrLastMonth(self, query, currentDate):
+        if(currentDate):
+            query=query.replace("XXFirstDate", self.date_firstOfCurrentMonth)
+            query=query.replace("XXSecondDate", str(todaysDate))
+        else:
+            query=query.replace("XXFirstDate", self.date_firstOfLastMonth)
+            query=query.replace("XXSecondDate", self.date_MonthAgo)
+
+        return query
+
     def FirstToNowBudgets(self, currentDate=True):
         query='''
         select sum(Total) as total, BudgetCategory 
@@ -35,12 +45,7 @@ class QueryStringComponent():
         group by BudgetCategory 
         order by sum(Total) desc;
         '''
-        if(currentDate):
-            query=query.replace("XXFirstDate", self.date_firstOfCurrentMonth)
-            query=query.replace("XXSecondDate", str(todaysDate))
-        else:
-            query=query.replace("XXFirstDate", self.date_firstOfLastMonth)
-            query=query.replace("XXSecondDate", self.date_MonthAgo)
+        query=self.__CurrentMonthOrLastMonth(query, currentDate)
 
         return (query, basicArray_NLists(2, 'string'))
 
@@ -52,12 +57,7 @@ class QueryStringComponent():
         group by SubBudgetCategory, BudgetCategory
         order by sum(Total) desc;
         '''
-        if(currentDate):
-            query=query.replace("XXFirstDate", self.date_firstOfCurrentMonth)
-            query=query.replace("XXSecondDate", str(todaysDate))
-        else:
-            query=query.replace("XXFirstDate", self.date_firstOfLastMonth)
-            query=query.replace("XXSecondDate", self.date_MonthAgo)
+        query=self.__CurrentMonthOrLastMonth(query, currentDate)
         return (query, basicArray_NLists(2, 'string'))
 
     def CostsOverYear(self, partAtWeek=True):
@@ -105,6 +105,17 @@ class QueryStringComponent():
         group by Day(CreatedAt)
         order by Day(CreatedAt) desc
         '''
+
+        return (query, basicArray_NLists(2))
+
+    #This method is unique because it only returns two values. Therefore must use SingleRowResults
+    def IncomeVsExpense(self, currentDate=True):
+        query='''
+        select sum(Total), (select sum(Total) from FinanceExpense where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\')
+        From FinanceIncome
+        where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\'
+        '''
+        query=self.__CurrentMonthOrLastMonth(query, currentDate)
 
         return (query, basicArray_NLists(2))
     
@@ -158,3 +169,13 @@ class QueryResultComponent():
         self.microsoftSQL.closeConnection()
         return results
 
+    def SingleRowResults(self, components, labels=[]):
+        if(type(components)!=list):
+            components = [components]
+        self.microsoftSQL.startConnection()
+        i=0
+        results=[]
+        for component in components:
+            queryResult = self.microsoftSQL.manualQuery(component[0])
+            results.append(queryResult)
+        return results
