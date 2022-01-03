@@ -22,9 +22,12 @@ def basicArray_NLists(n, type='number'):
         listLambda.append(getN_OfList(i-1, type))
     return listLambda
 
+#This hosts all queries to store in one location, as well as iterables for a given query
+#The result is (query, [Iterators])
 class QueryStringComponent():
-    date_firstOfLastMonth=str(todaysDate.replace(day=1, month=todaysDate.month-1))
-    date_MonthAgo=str(todaysDate.replace(month=todaysDate.month-1))
+    LastMonth = (todaysDate.month-1 if todaysDate.month > 1 else 12)
+    date_firstOfLastMonth=str(todaysDate.replace(day=1, month=LastMonth))
+    date_MonthAgo=str(todaysDate.replace(month=LastMonth))
     date_firstOfCurrentMonth=str(todaysDate.replace(day=1))
 
     def __CurrentMonthOrLastMonth(self, query, currentDate):
@@ -39,11 +42,11 @@ class QueryStringComponent():
 
     def FirstToNowBudgets(self, currentDate=True):
         query='''
-        select sum(Total) as total, BudgetCategory 
+        select IsNull(sum(Total), 0) as total, BudgetCategory 
         from FinanceExpense
         where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\' 
         group by BudgetCategory 
-        order by sum(Total) desc;
+        order by IsNull(sum(Total), 0) desc;
         '''
         query=self.__CurrentMonthOrLastMonth(query, currentDate)
 
@@ -51,18 +54,18 @@ class QueryStringComponent():
 
     def FirstToNowSubBudgets(self, currentDate=True):
         query='''
-        select sum(Total) as total, case when SubBudgetCategory!='' then SubBudgetCategory else BudgetCategory end 
+        select IsNull(sum(Total), 0) as total, case when SubBudgetCategory!='' then SubBudgetCategory else BudgetCategory end 
         from FinanceExpense
         where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\'
         group by SubBudgetCategory, BudgetCategory
-        order by sum(Total) desc;
+        order by IsNull(sum(Total), 0) desc;
         '''
         query=self.__CurrentMonthOrLastMonth(query, currentDate)
         return (query, basicArray_NLists(2, 'string'))
 
     def CostsOverYear(self, partAtWeek=True):
         query='''
-        select sum(Total) as total, DATEPART(WEEK, CreatedAt) as week
+        select IsNull(sum(Total), 0) as total, DATEPART(WEEK, CreatedAt) as week
         from FinanceExpense where CreatedAt >= \''''+str(beginningOfYear)+'''\'
         group by DATEPART(WEEK, CreatedAt)
         order by DATEPART(WEEK, CreatedAt)
@@ -75,7 +78,7 @@ class QueryStringComponent():
         query='''
         select AVG(Total)
         from (
-        select sum(Total) as Total from FinanceExpense group by DATEPART(MONTH, CreatedAt)
+        select IsNull(sum(Total), 0) as Total from FinanceExpense group by DATEPART(MONTH, CreatedAt)
         ) sumMonthlyCost
         '''
         return (query, basicArray_NLists(1))
@@ -111,7 +114,7 @@ class QueryStringComponent():
     #This method is unique because it only returns two values. Therefore must use SingleRowResults
     def IncomeVsExpense(self, currentDate=True):
         query='''
-        select sum(Total), (select sum(Total) from FinanceExpense where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\')
+        select IsNull(sum(Total), 0), (select IsNull(sum(Total), 0) from FinanceExpense where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\')
         From FinanceIncome
         where CreatedAt between \'XXFirstDate\' and \'XXSecondDate\'
         '''
@@ -178,4 +181,5 @@ class QueryResultComponent():
         for component in components:
             queryResult = self.microsoftSQL.manualQuery(component[0])
             results.append(queryResult)
+        self.microsoftSQL.closeConnection()
         return results

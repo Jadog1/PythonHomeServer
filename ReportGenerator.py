@@ -55,7 +55,7 @@ class Reports:
 	            ) matched
         where DATEDIFF(day, CreatedAt, CONVERT(DATE, GETDATE()))>matched.FrequencyOfDays;
 	  ''')
-        HasPastDue=(len(ExpensesPastDueReport)>0)
+        HasPastDue=(len(ExpensesPastUpdate)>0)
         for expense in ExpensesPastUpdate:
             ExpensesPastDueReport=ExpensesPastDueReport+\
                 "Budget category "+str(expense[1])+\
