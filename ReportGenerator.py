@@ -64,9 +64,9 @@ class Reports:
             if(expense[3]!=''):
                 query='''
                 select Sum(Total) from FinanceExpense fe 
-                join FinanceUpdate fu on fe.BudgetCategory = fe.BudgetCategory and fu.SubBudgetCategory=fe.SubBudgetCategory
+                join FinanceUpdate fu on fu.ReliantOnBudgetCategory = fe.BudgetCategory and fu.ReliantOnSubBudgetCategory=fe.SubBudgetCategory
                 where fe.BudgetCategory='XXBUDG' and fe.SubBudgetCategory='XXSUBBUDG' and 
-                      fu.BudgetCategory='XXBUDG' and fu.SubBudgetCategory='XXSUBBUDG' and fe.CreatedAt>DateAdd(day, -1*fu.FrequencyOfDays, GETDATE())
+                      fu.ReliantOnBudgetCategory='XXBUDG' and fu.ReliantOnSubBudgetCategory='XXSUBBUDG' and fe.CreatedAt>DateAdd(day, -1*fu.FrequencyOfDays, GETDATE())
                 '''
                 query = query.replace('XXBUDG', expense[3])
                 query = query.replace('XXSUBBUDG', expense[4])

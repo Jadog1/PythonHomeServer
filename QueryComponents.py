@@ -26,8 +26,9 @@ def basicArray_NLists(n, type='number'):
 #The result is (query, [Iterators])
 class QueryStringComponent():
     LastMonth = (todaysDate.month-1 if todaysDate.month > 1 else 12)
-    date_firstOfLastMonth=str(todaysDate.replace(day=1, month=LastMonth))
-    date_MonthAgo=str(todaysDate.replace(month=LastMonth))
+    LastYear = (todaysDate.year - 1 if todaysDate.month == 1 else todaysDate.year)
+    date_firstOfLastMonth=str(todaysDate.replace(day=1, month=LastMonth, year=LastYear))
+    date_MonthAgo=str(todaysDate.replace(month=LastMonth, year=LastYear))
     date_firstOfCurrentMonth=str(todaysDate.replace(day=1))
 
     def __CurrentMonthOrLastMonth(self, query, currentDate):

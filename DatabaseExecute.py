@@ -1,6 +1,7 @@
 import datetime
 import pyodbc 
 import os
+import ServerRequest
 from dotenv import load_dotenv
 
 class DatabaseExecutions():
@@ -19,10 +20,13 @@ class DatabaseExecutions():
                 return self.cursor.fetchall()
             else:
                 self.conn.commit()
-        except:
-            self.cursor.execute("Insert into ErrorLog (QueryLog) values ("+query+"), " + str(insertValues))
+        except Exception as e:
+            self.cursor.execute("Insert into ErrorLog (QueryLog) values (?)", [query])
             self.conn.commit()
-            print("Error on query. Logged: ", query)
+            
+            notifications=ServerRequest.Notifications()
+            notifications.sendEmail("Error!!", e)
+            raise Exception('Edward')
             return []
 
 class ServerDatabaseInserts(DatabaseExecutions):
@@ -47,11 +51,17 @@ class ServerDatabaseInserts(DatabaseExecutions):
         parsedData=self.parseJsonTableData(TableData)
         genericInsertStatement="INSERT INTO {} ({}) VALUES ({})"
         genericInsertStatement=genericInsertStatement.format(parsedData[0], parsedData[1], parsedData[2])
-        self.genericQuery(genericInsertStatement, False, parsedData[3])
+        self.cursor.execute(genericInsertStatement, parsedData[3])
 
-    def insertRows(self, ServerRequest):
-        transactions = ServerRequest
-        for transaction in transactions:
-            self.__insertRow(transaction)
+    def insertRows(self, ServerRequestInternet):
+        try:
+            transactions = ServerRequestInternet
+            for transaction in transactions:
+                self.__insertRow(transaction)
+            self.conn.commit()
+        except Exception as e:
+            notifications=ServerRequest.Notifications()
+            notifications.sendEmail("Error!!", str(e))
+            raise Exception('Edward')
 
 
