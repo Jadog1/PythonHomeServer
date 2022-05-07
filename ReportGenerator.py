@@ -18,6 +18,10 @@ class Reports:
                 report+=str(val[0]) + ", " + str(val[1])+ ": $" + str(val[2])+"\n"
         return report+"<br>"
 
+    def __getEnvelopes(self):
+        envelopes=self.db.genericQuery("select BudgetCategory, Saved from FinanceEnvelopes")
+        return self.__genStringReport("Envelopes", envelopes)
+
     def __totalSumOfCosts(self, days=7):
         lastWeekSum=self.db.genericQuery("select sum(Total) from FinanceExpense where CreatedAt>DATEADD(day, -"+str(days)+", GETDATE())")
         return self.__genStringReport("Total cost", lastWeekSum)
@@ -101,6 +105,7 @@ class Reports:
         if(updateReport!=""):
             server.sendEmail("Finance updates", updateReport)
 
+        server.sendEmail("Daily Envelopes", self.__getEnvelopes())
 
         if self.dayOfWeek == 1:
             DailySpending()
